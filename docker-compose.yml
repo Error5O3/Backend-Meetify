@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+   postgreSQL:
+    image: postgres:latest
+    container_name: newpost
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgresA
+    ports:
+      - 5433:5432
+    restart: unless-stopped
