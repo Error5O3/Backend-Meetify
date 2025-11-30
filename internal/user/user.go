@@ -21,7 +21,9 @@ type UserResponse struct {
 
 type Repository interface {
 	CreateUser(c context.Context, user *User) (*User, error)
+	LoginUser(c context.Context, user *User) (*User, error)
 }
 type Service interface {
 	CreateUser(c context.Context, req *UserRequest) (*UserResponse, error)
+	LoginUser(c context.Context, req *UserRequest) (*UserResponse, error)
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	database "server/db"
 	"server/internal/user"
+	"server/internal/event"
 	"server/router"
 )
 
@@ -26,7 +27,11 @@ func main() {
 	userService := user.NewService(userRepository)
 	userHandler := user.NewHandler(userService)
 
-	router.InitRouter(userHandler)
+	eventRepository := event.NewRepository(dbConn.GetDB())
+	eventService := event.NewService(eventRepository)
+	eventHandler := event.NewHandler(eventService)
+
+	router.InitRouter(userHandler, eventHandler)
 	router.Start(":8080")
 
 }

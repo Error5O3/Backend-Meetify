@@ -33,5 +33,20 @@ func (s *Handler) CreateUser(c *gin.Context) {
 
 	// Return HTTP 200 status code with the response from the service
 	c.JSON(http.StatusOK, res)
+}
 
+func(s *Handler) LoginUser(c *gin.Context){
+	var user UserRequest
+	if err := c.ShouldBindJSON(&user); err != nil{
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	res, err := s.Service.LoginUser(c.Request.Context(), &user)
+	if err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
 }

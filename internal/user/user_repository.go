@@ -33,3 +33,16 @@ func (r *repository) CreateUser(ctx context.Context, user *User) (*User, error) 
 	user.ID = lastID
 	return user, nil
 }
+
+func (r *repository) LoginUser(ctx context.Context, user *User) (*User, error) {
+	// Simple existence check: return nil if a user with the given username exists
+	query := "SELECT id, username, email FROM users WHERE username = $1"
+	var u User
+	err := r.db.QueryRowContext(ctx, query, user.Username).Scan(&u.ID, &u.Username, &u.Email)
+	if err != nil {
+		// sql.ErrNoRows means user not found; propagate so caller can handle
+		return nil, err
+	}
+	return  &u,nil
+}
+

@@ -2,6 +2,7 @@ package router
 
 import (
 	"server/internal/user"
+	"server/internal/event"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -10,11 +11,11 @@ import (
 
 var r *gin.Engine
 
-func InitRouter(userHandler *user.Handler) {
+func InitRouter(userHandler *user.Handler, eventHandler *event.Handler) {
 	r = gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST"},
+		AllowMethods:     []string{"GET", "POST", "DELETE"},
 		AllowHeaders:     []string{"Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -30,6 +31,11 @@ func InitRouter(userHandler *user.Handler) {
 		})
 	})
 	r.POST("/signup", userHandler.CreateUser)
+	r.POST("/login", userHandler.LoginUser)
+	r.POST("/event", eventHandler.CreateEvent)
+	r.GET("/events/:event_id/grid" ,eventHandler.GetEventGrid)
+	r.POST("/availability", eventHandler.MarkAvailable)
+	r.DELETE("/availability",eventHandler.UnmarkAvailable)
 
 }
 
