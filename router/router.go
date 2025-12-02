@@ -1,8 +1,8 @@
 package router
 
 import (
-	"server/internal/user"
 	"server/internal/event"
+	"server/internal/user"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -14,13 +14,14 @@ var r *gin.Engine
 func InitRouter(userHandler *user.Handler, eventHandler *event.Handler) {
 	r = gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{"http://192.168.4.76:8080"},
 		AllowMethods:     []string{"GET", "POST", "DELETE"},
 		AllowHeaders:     []string{"Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return origin == "http://localhost:3000"
+
+			return origin == "http://192.168.4.76:8080"
 		},
 		MaxAge: 12 * time.Hour,
 	}))
@@ -33,9 +34,9 @@ func InitRouter(userHandler *user.Handler, eventHandler *event.Handler) {
 	r.POST("/signup", userHandler.CreateUser)
 	r.POST("/login", userHandler.LoginUser)
 	r.POST("/event", eventHandler.CreateEvent)
-	r.GET("/events/:event_id/grid" ,eventHandler.GetEventGrid)
+	r.GET("/events/:event_id/grid", eventHandler.GetEventGrid)
 	r.POST("/availability", eventHandler.MarkAvailable)
-	r.DELETE("/availability",eventHandler.UnmarkAvailable)
+	r.DELETE("/availability", eventHandler.UnmarkAvailable)
 
 }
 
