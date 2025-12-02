@@ -1,28 +1,29 @@
 package event
 
-import(
+import (
 	"net/http"
 	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct{
+type Handler struct {
 	Service
 }
 
-func NewHandler(s Service) *Handler{
+func NewHandler(s Service) *Handler {
 	return &Handler{
-		Service : s,
+		Service: s,
 	}
 }
 
-func (h *Handler) CreateEvent(c *gin.Context){
-	userIDStr := c.Query("user_id")
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
-		return
-	}
+func (h *Handler) CreateEvent(c *gin.Context) {
+	// userIDStr := c.Query("user_id")
+	// userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+	// 	return
+	// }
 	var req CreateEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -31,7 +32,7 @@ func (h *Handler) CreateEvent(c *gin.Context){
 		return
 	}
 
-	res, err := h.Service.CreateEvent(c.Request.Context(), &req, userID)
+	res, err := h.Service.CreateEvent(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -56,7 +57,6 @@ func (h *Handler) GetEvent(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
-
 
 func (h *Handler) GetEventGrid(c *gin.Context) {
 	eventIDStr := c.Param("event_id")

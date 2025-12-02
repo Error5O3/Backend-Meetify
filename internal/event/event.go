@@ -1,6 +1,6 @@
 package event
 
-import(
+import (
 	"context"
 )
 
@@ -9,7 +9,6 @@ type Event struct {
 	Name      string `json:"name"`
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
-	CreatedBy int64  `json:"created_by"`
 	CreatedAt string `json:"created_at"`
 }
 
@@ -55,7 +54,7 @@ type DateSlots struct {
 }
 
 type SlotInfo struct {
-	SlotID         int64 `json:"slot_id"`
+	SlotID         int64  `json:"slot_id"`
 	StartTime      string `json:"start_time"`
 	EndTime        string `json:"end_time"`
 	AvailableCount int    `json:"available_count"`
@@ -64,6 +63,26 @@ type SlotInfo struct {
 
 type MarkAvailabilityRequest struct {
 	TimeSlotID int64 `json:"time_slot_id" binding:"required"`
+}
+
+type VueSlot struct {
+	ID             int64    `json:"id"`
+	StartTime      string   `json:"start_time"`
+	EndTime        string   `json:"end_time"`
+	AvailableCount int      `json:"available_count"`
+	AvailableUsers []string `json:"available_users"`
+}
+
+type VueDateGroup struct {
+	Date  string    `json:"date"`
+	Slots []VueSlot `json:"slots"`
+}
+
+type VueGridResponse struct {
+	Dates     []string `json:"dates"`
+	TimeSlots []string `json:"time_slots"`
+	Users     []string `json:"users"`
+	// NumUsers
 }
 
 type Repository interface {
@@ -77,7 +96,7 @@ type Repository interface {
 }
 
 type Service interface {
-	CreateEvent(ctx context.Context, req *CreateEventRequest, userID int64) (*CreateEventResponse, error)
+	CreateEvent(ctx context.Context, req *CreateEventRequest) (*CreateEventResponse, error)
 	GetEvent(ctx context.Context, eventID int64) (*Event, error)
 	GetEventGrid(ctx context.Context, eventID int64, userID int64) (*EventGridResponse, error)
 	MarkAvailable(ctx context.Context, userID int64, req *MarkAvailabilityRequest) error

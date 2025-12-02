@@ -1,11 +1,11 @@
 package event
 
-import(
+import (
 	"context"
 	"time"
 )
 
-type service struct{
+type service struct {
 	Repository
 }
 
@@ -16,41 +16,41 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) CreateEvent(c context.Context, req *CreateEventRequest, userID int64) (*CreateEventResponse, error) {
+func (s *service) CreateEvent(c context.Context, req *CreateEventRequest) (*CreateEventResponse, error) {
 	ctx, cancel := context.WithTimeout(c, 10*time.Second)
 	defer cancel()
 	event := &Event{
-			Name : req.Name,
-			StartTime : req.StartTime,
-			EndTime : req.EndTime,
-			CreatedBy : userID,
+		Name:      req.Name,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+		// CreatedBy : userID,
 	}
 	createdEvent, err := s.Repository.CreateEvent(ctx, event)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-	for _, dateStr := range req.Dates{
+	for _, dateStr := range req.Dates {
 		eventDate := &EventDate{
-			EventID: createdEvent.EventID,
+			EventID:   createdEvent.EventID,
 			EventDate: dateStr,
 		}
 		createdDate, err := s.Repository.CreateEventDate(ctx, eventDate)
-		if err != nil{
+		if err != nil {
 			return nil, err
 		}
-		if err := s.generateTimeSlots(ctx, createdDate.ID, req.StartTime, req.EndTime); err != nil{
+		if err := s.generateTimeSlots(ctx, createdDate.ID, req.StartTime, req.EndTime); err != nil {
 			return nil, err
 		}
 
 	}
 	res := &CreateEventResponse{
-		EventID: createdEvent.EventID,
-		Name: createdEvent.Name,
-		Dates: req.Dates,
+		EventID:   createdEvent.EventID,
+		Name:      createdEvent.Name,
+		Dates:     req.Dates,
 		StartTime: req.StartTime,
-		EndTime: req.EndTime,
+		EndTime:   req.EndTime,
 	}
-	
+
 	return res, nil
 }
 
@@ -59,7 +59,7 @@ func (s *service) generateTimeSlots(ctx context.Context, eventDateID int64, star
 	if err != nil {
 		return err
 	}
-	
+
 	end, err := time.Parse("15:04", endTime)
 	if err != nil {
 		return err
@@ -81,10 +81,9 @@ func (s *service) generateTimeSlots(ctx context.Context, eventDateID int64, star
 			return err
 		}
 	}
-	
+
 	return nil
 }
-
 
 func (s *service) GetEvent(c context.Context, eventID int64) (*Event, error) {
 	ctx, cancel := context.WithTimeout(c, 5*time.Second)
