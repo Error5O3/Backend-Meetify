@@ -4,6 +4,18 @@ import (
 	"context"
 )
 
+type PublicSlot struct {
+	StartTime    string `json:"start_time"`
+	ID           int64  `json:"id"`
+	NumAvailable int    `json:"num_available"`
+}
+type PublicGridResponse struct {
+	Dates     []string       `json:"dates"`
+	TimeSlots [][]PublicSlot `json:"time_slots"`
+	Users     []string       `json:"users"`
+	NumUsers  int            `json:"numUsers"`
+}
+
 type Event struct {
 	EventID   int64  `json:"event_id"`
 	Name      string `json:"name"`
@@ -73,24 +85,12 @@ type VueSlot struct {
 	AvailableUsers []string `json:"available_users"`
 }
 
-type VueDateGroup struct {
-	Date  string    `json:"date"`
-	Slots []VueSlot `json:"slots"`
-}
-
-type VueGridResponse struct {
-	Dates     []string `json:"dates"`
-	TimeSlots []string `json:"time_slots"`
-	Users     []string `json:"users"`
-	// NumUsers
-}
-
 type Repository interface {
 	CreateEvent(ctx context.Context, event *Event) (*Event, error)
 	CreateEventDate(ctx context.Context, eventDate *EventDate) (*EventDate, error)
 	CreateTimeSlot(ctx context.Context, timeSlot *TimeSlot) error
 	GetEvent(ctx context.Context, eventID int64) (*Event, error)
-	GetEventGrid(ctx context.Context, eventID int64, userID int64) (*EventGridResponse, error)
+	GetEventGrid(ctx context.Context, eventID int64) (*PublicGridResponse, error)
 	MarkAvailable(ctx context.Context, userID, timeSlotID int64) error
 	UnmarkAvailable(ctx context.Context, userID, timeSlotID int64) error
 }
@@ -98,7 +98,7 @@ type Repository interface {
 type Service interface {
 	CreateEvent(ctx context.Context, req *CreateEventRequest) (*CreateEventResponse, error)
 	GetEvent(ctx context.Context, eventID int64) (*Event, error)
-	GetEventGrid(ctx context.Context, eventID int64, userID int64) (*EventGridResponse, error)
+	GetEventGrid(ctx context.Context, eventID int64) (*PublicGridResponse, error)
 	MarkAvailable(ctx context.Context, userID int64, req *MarkAvailabilityRequest) error
 	UnmarkAvailable(ctx context.Context, userID int64, req *MarkAvailabilityRequest) error
 }

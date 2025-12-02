@@ -66,15 +66,7 @@ func (h *Handler) GetEventGrid(c *gin.Context) {
 		return
 	}
 
-	// Get user_id from query param or context (depending on your auth setup)
-	userIDStr := c.Query("user_id")
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
-		return
-	}
-
-	res, err := h.Service.GetEventGrid(c.Request.Context(), eventID, userID)
+	res, err := h.Service.GetEventGrid(c.Request.Context(), eventID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

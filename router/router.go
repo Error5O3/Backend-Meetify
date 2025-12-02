@@ -32,6 +32,7 @@ func InitRouter(userHandler *user.Handler, eventHandler *event.Handler) {
 		})
 	})
 	r.POST("/signup", userHandler.CreateUser)
+	r.GET("/events/:event_id", eventHandler.GetEventGrid)
 	r.POST("/login", userHandler.LoginUser)
 	r.POST("/event", eventHandler.CreateEvent)
 	r.GET("/events/:event_id/grid", eventHandler.GetEventGrid)

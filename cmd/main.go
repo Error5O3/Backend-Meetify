@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	database "server/db"
-	"server/internal/user"
 	"server/internal/event"
+	"server/internal/user"
 	"server/router"
 )
 
@@ -32,6 +32,6 @@ func main() {
 	eventHandler := event.NewHandler(eventService)
 
 	router.InitRouter(userHandler, eventHandler)
-	router.Start(":8080")
+	router.Start(":8081")
 
 }

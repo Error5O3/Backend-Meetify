@@ -68,81 +68,98 @@ func (r *repository) GetEvent(ctx context.Context, eventID int64) (*Event, error
 // this function will return the availabity of the current user to certain event that has been created before, including:
 // the time slot availaiblity with the current users selection
 
-func (r *repository) GetEventGrid(ctx context.Context, eventID int64, userID int64) (*EventGridResponse, error) {
-	// Get event details
-	event, err := r.GetEvent(ctx, eventID)
+func (r *repository) GetEventGrid(ctx context.Context, eventID int64) (*PublicGridResponse, error) {
+	query := `SELECT
+				DATE(ed.event_date) AS event_date,
+				ts.id AS slot_id,
+				ts.start_time,
+				COUNT(ua.user_id) AS num_available
+			FROM event_dates ed
+			JOIN time_slots ts ON ts.event_date_id = ed.id
+			LEFT JOIN user_availability ua ON ua.time_slot_id = ts.id
+			WHERE ed.event_id = $1
+			GROUP BY ed.event_date, ts.id, ts.start_time
+			ORDER BY ed.event_date, ts.start_time
+				`
+
+	rows, err := r.db.QueryContext(ctx, query, eventID)
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Get all slots with availability counts and user's selections
-	query := `
-		SELECT 
-			ed.event_date,
-			ts.id as slot_id,
-			ts.start_time, 
-			ts.end_time,
-			COUNT(DISTINCT ua.user_id) as available_count,
-			CASE WHEN ua_user.user_id IS NOT NULL THEN true ELSE false END as is_available
-		FROM event_dates ed
-		JOIN time_slots ts ON ts.event_date_id = ed.id
-		LEFT JOIN user_availability ua ON ua.time_slot_id = ts.id
-		LEFT JOIN user_availability ua_user ON ua_user.time_slot_id = ts.id AND ua_user.user_id = $2
-		WHERE ed.event_id = $1
-		GROUP BY ed.event_date, ts.id, ts.start_time, ts.end_time, ua_user.user_id
-		ORDER BY ed.event_date, ts.start_time
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, eventID, userID)
-	if err != nil {
-		return nil, err
-	}
 	defer rows.Close()
-
-	// Build the response
-	dateMap := make(map[string]*DateSlots)
-	var dates []DateSlots
+	dateMap := make(map[string][]PublicSlot)
+	var dates []string
+	dateOrder := make(map[string]int)
 
 	for rows.Next() {
-		var date string
-		var slot SlotInfo
-
-		err := rows.Scan(&date, &slot.SlotID, &slot.StartTime, &slot.EndTime,
-			&slot.AvailableCount, &slot.IsAvailable)
+		var date, startTime string
+		var slotID int64
+		var numAvailable int
+		err := rows.Scan(&date, &slotID, &startTime, &numAvailable)
 		if err != nil {
 			return nil, err
 		}
-
 		if _, exists := dateMap[date]; !exists {
-			dateMap[date] = &DateSlots{
-				Date:  date,
-				Slots: []SlotInfo{},
-			}
-			dates = append(dates, *dateMap[date])
+			dateOrder[date] = len(dates)
+			dates = append(dates, date)
+			dateMap[date] = []PublicSlot{}
 		}
-		dateMap[date].Slots = append(dateMap[date].Slots, slot)
+		dateMap[date] = append(dateMap[date], PublicSlot{
+			StartTime:    startTime,
+			ID:           slotID,
+			NumAvailable: numAvailable,
+		})
 	}
 
-	// Update dates slice with complete slot info
-	for i := range dates {
-		if ds, ok := dateMap[dates[i].Date]; ok {
-			dates[i].Slots = ds.Slots
-		}
+	timeSlots := make([][]PublicSlot, len(dates))
+	for date, slots := range dateMap {
+		index := dateOrder[date]
+		timeSlots[index] = slots
 	}
 
-	return &EventGridResponse{
-		EventID:   event.EventID,
-		Name:      event.Name,
-		StartTime: event.StartTime,
-		EndTime:   event.EndTime,
+	usersQuery := `SELECT DISTINCT u.username
+							FROM users u
+							JOIN user_availability ua ON ua.user_id = u.id
+							JOIN time_slots ts ON ts.id = ua.time_slot_id
+							JOIN event_dates ed ON ed.id = ts.event_date_id
+							WHERE ed.event_id = $1
+							ORDER BY u.username`
+	userRows, err := r.db.QueryContext(ctx, usersQuery, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer userRows.Close()
+
+	var users []string
+	for userRows.Next() {
+		var username string
+		userRows.Scan(&username)
+		users = append(users, username)
+	}
+
+	return &PublicGridResponse{
 		Dates:     dates,
+		TimeSlots: timeSlots,
+		Users:     users,
+		NumUsers:  len(users),
 	}, nil
 }
 
-// basically for this query we need to do a for loop because we are given a set of id slots we wanna add for an specific user
+// basically for this query we need to do a for loop because we are given a set of id slots we wanna add for an specific user	return &EventGridResponse{
+// 		EventID:   event.EventID,
+// 		Name:      event.Name,
+// 		StartTime: event.StartTime,
+// 		EndTime:   event.EndTime,
+// 		Dates:     dates,
+// 	}, nil
+// }
+
 func (r *repository) MarkAvailable(ctx context.Context, userID, timeSlotID int64) error {
-	query := `
-			INSERT INTO user_availability (user_id, time_slot_id)
+
+	// this will be triggered every time you dealocate the time slot of a userquery := `
+	query := `INSERT INTO user_availability (user_id, time_slot_id)
 			VALUES ($1, $2)
 			ON CONFLICT DO NOTHING
 	`
@@ -150,7 +167,6 @@ func (r *repository) MarkAvailable(ctx context.Context, userID, timeSlotID int64
 	return err
 }
 
-// this will be triggered every time you dealocate the time slot of a user
 func (r *repository) UnmarkAvailable(ctx context.Context, userID, timeSlotID int64) error {
 	query := `DELETE FROM user_availability WHERE user_id = $1 AND time_slot_id = $2`
 	_, err := r.db.ExecContext(ctx, query, userID, timeSlotID)

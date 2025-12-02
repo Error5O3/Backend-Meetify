@@ -91,11 +91,11 @@ func (s *service) GetEvent(c context.Context, eventID int64) (*Event, error) {
 	return s.Repository.GetEvent(ctx, eventID)
 }
 
-func (s *service) GetEventGrid(c context.Context, eventID int64, userID int64) (*EventGridResponse, error) {
+func (s *service) GetEventGrid(c context.Context, eventID int64) (*PublicGridResponse, error) {
 	ctx, cancel := context.WithTimeout(c, 5*time.Second)
 	defer cancel()
 
-	return s.Repository.GetEventGrid(ctx, eventID, userID)
+	return s.Repository.GetEventGrid(ctx, eventID)
 }
 
 func (s *service) MarkAvailable(c context.Context, userID int64, req *MarkAvailabilityRequest) error {
