@@ -37,6 +37,7 @@ func InitRouter(userHandler *user.Handler, eventHandler *event.Handler) {
 	r.POST("/login", userHandler.LoginUser)
 	r.POST("/event", eventHandler.CreateEvent)
 	// r.GET("/events/:event_id/grid", eventHandler.GetEventGrid)
+	r.GET("/availability/:user_id", userHandler.GetAvail)
 	r.POST("/availability", eventHandler.MarkAvailable)
 	r.DELETE("/availability", eventHandler.UnmarkAvailable)
 

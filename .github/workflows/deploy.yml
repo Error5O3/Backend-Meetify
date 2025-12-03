@@ -1,0 +1,67 @@
+name: Deploy Docker DB and Backend to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # build phase
+      - name: Install Project Dependencies
+        run: go mod tidy
+        working-directory: ./cmd
+
+      - name: Build Golang Backend (cmd binary file)
+        run: go build -o go-backend
+        working-directory: ./cmd
+
+      - name: Run Docker DB
+        run: docker-compose up
+        working-directory: ./
+      
+      # deployment phase
+      - name: Configure SSH and Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa 
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ec2-18-220-224-29.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+      - name: Sync Files to EC2 (Secure Copy)
+        env:
+          EC2_HOST: ec2-18-220-224-29.us-east-2.compute.amazonaws.com
+          EC2_USER: ec2-user
+          TARGET_DIR: /home/ec2-user/meetify-backend/
+        run: |
+          echo "Syncing core files from meetify-backend/ to ${{ env.TARGET_DIR }}"
+          
+          # Copy server.js and package.json (Source path includes the subdirectory)
+          scp -i ~/.ssh/id_rsa ./meetify-frontend/server.js ${{ env.EC2_USER }}@${{ env.EC2_HOST }}:${{ env.TARGET_DIR }}
+          scp -i ~/.ssh/id_rsa ./meetify-frontend/package.json ${{ env.EC2_USER }}@${{ env.EC2_HOST }}:${{ env.TARGET_DIR }}
+          
+          # Copy the compiled cmd file
+          scp -r -i ~/.ssh/id_rsa ./meetify-backend/cmd ${{ env.EC2_USER }}@${{ env.EC2_HOST }}:${{ env.TARGET_DIR }}
+          
+      - name: Restart PM2 Application via SSH
+        env:
+          EC2_HOST: ec2-18-220-224-29.us-east-2.compute.amazonaws.com 
+          EC2_USER: ec2-user
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
+            # Navigate to the project directory on EC2
+            cd /home/ec2-user/meetify/
+            
+            # Restart the PM2 process
+            echo "🚀 Restarting PM2 process 'meetify'..."
+            /home/ec2-user/.nvm/versions/node/v22.20.0/bin/pm2 restart meetify
+            
+            echo "✅ Deployment completed successfully!"
+          EOF

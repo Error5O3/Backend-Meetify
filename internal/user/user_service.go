@@ -9,6 +9,13 @@ type service struct {
 	Repository
 }
 
+func (s *service) GetAvail(c context.Context, userID int64) (*UserGridResponse, error) {
+	ctx, cancel := context.WithTimeout(c, 5*time.Second)
+	defer cancel()
+
+	return s.Repository.GetAvail(ctx, userID)
+}
+
 func NewService(repo Repository) Service {
 	return &service{
 		repo,
@@ -34,20 +41,20 @@ func (s *service) CreateUser(c context.Context, req *UserRequest) (*UserResponse
 	return res, nil
 }
 
-func(s *service) LoginUser(c context.Context, req *UserRequest) (*UserResponse , error){
-	ctx, cancel := context.WithTimeout(c , 5*time.Second)
+func (s *service) LoginUser(c context.Context, req *UserRequest) (*UserResponse, error) {
+	ctx, cancel := context.WithTimeout(c, 5*time.Second)
 	defer cancel()
 	usr := &User{
 		Username: req.Username,
 	}
 	user, err := s.Repository.LoginUser(ctx, usr)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	res := &UserResponse{
-		ID: user.ID,
-		Username : user.Username,
-		Email: user.Email,
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
 	}
-	return res,nil
+	return res, nil
 }

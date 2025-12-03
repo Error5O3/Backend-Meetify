@@ -19,11 +19,18 @@ type UserResponse struct {
 	Email    string `json:"email"`
 }
 
+type UserGridResponse struct {
+	AvailSlots []int64 `json:"avail"`
+}
+
 type Repository interface {
 	CreateUser(c context.Context, user *User) (*User, error)
 	LoginUser(c context.Context, user *User) (*User, error)
+	GetAvail(c context.Context, userID int64) (*UserGridResponse, error)
 }
+
 type Service interface {
 	CreateUser(c context.Context, req *UserRequest) (*UserResponse, error)
 	LoginUser(c context.Context, req *UserRequest) (*UserResponse, error)
+	GetAvail(c context.Context, userID int64) (*UserGridResponse, error)
 }
