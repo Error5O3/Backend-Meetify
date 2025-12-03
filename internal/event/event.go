@@ -14,6 +14,7 @@ type PublicGridResponse struct {
 	TimeSlots [][]PublicSlot `json:"time_slots"`
 	Users     []string       `json:"users"`
 	NumUsers  int            `json:"numUsers"`
+	EventName string         `json:"name"`
 }
 
 type Event struct {

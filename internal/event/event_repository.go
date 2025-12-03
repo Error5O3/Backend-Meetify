@@ -88,6 +88,15 @@ func (r *repository) GetEventGrid(ctx context.Context, eventID int64) (*PublicGr
 		return nil, err
 	}
 
+	nameQuery := `SELECT name FROM events WHERE event_id = $1`
+
+	var name string
+	err1 := r.db.QueryRowContext(ctx, nameQuery, eventID).Scan(&name)
+
+	if err1 != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
 	dateMap := make(map[string][]PublicSlot)
 	var dates []string
@@ -144,6 +153,7 @@ func (r *repository) GetEventGrid(ctx context.Context, eventID int64) (*PublicGr
 		TimeSlots: timeSlots,
 		Users:     users,
 		NumUsers:  len(users),
+		EventName: name,
 	}, nil
 }
 
