@@ -208,7 +208,7 @@ func (r *repository) GetLocations(ctx context.Context, eventID int64) (*Location
 	for rows.Next() {
 		var location Location
 
-		err := rows.Scan(&location.LocationID, &location.Name, &location.Link, &location.NumLikes)
+		err := rows.Scan(&location.LocationID, &location.Link, &location.Name, &location.NumLikes)
 		if err != nil {
 			return nil, err
 		}
