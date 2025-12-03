@@ -86,6 +86,32 @@ type VueSlot struct {
 	AvailableUsers []string `json:"available_users"`
 }
 
+type Location struct {
+	LocationID int64  `json:"location_id"`
+	NumLikes   int64  `json:"likes"`
+	Name       string `json:"name"`
+	Link       string `json:"link"`
+}
+
+type CreateLocationRequest struct {
+	EventID int64  `json:"event_id"`
+	Name    string `json:"name"`
+	Link    string `json:"link"`
+}
+
+type LocationResponse struct {
+	Locations []Location `json:"locations"`
+}
+
+type UserLikes struct {
+	Likes []int64 `json:"likes"`
+}
+
+type LikeRequest struct {
+	UserID     int64 `json:"user_id"`
+	LocationID int64 `json:"location_id"`
+}
+
 type Repository interface {
 	CreateEvent(ctx context.Context, event *Event) (*Event, error)
 	CreateEventDate(ctx context.Context, eventDate *EventDate) (*EventDate, error)
@@ -94,6 +120,12 @@ type Repository interface {
 	GetEventGrid(ctx context.Context, eventID int64) (*PublicGridResponse, error)
 	MarkAvailable(ctx context.Context, userID, timeSlotID int64) error
 	UnmarkAvailable(ctx context.Context, userID, timeSlotID int64) error
+
+	CreateLocation(ctx context.Context, location *CreateLocationRequest) error
+	GetLocations(ctx context.Context, eventID int64) (*LocationResponse, error)
+	GetUserLikes(ctx context.Context, userID int64) (*UserLikes, error)
+	Like(ctx context.Context, userID, locationID int64) error
+	Unlike(ctx context.Context, userID, locationID int64) error
 }
 
 type Service interface {
@@ -102,4 +134,10 @@ type Service interface {
 	GetEventGrid(ctx context.Context, eventID int64) (*PublicGridResponse, error)
 	MarkAvailable(ctx context.Context, userID int64, req *MarkAvailabilityRequest) error
 	UnmarkAvailable(ctx context.Context, userID int64, req *MarkAvailabilityRequest) error
+
+	CreateLocation(ctx context.Context, req *CreateLocationRequest) error
+	GetLocations(ctx context.Context, eventID int64) (*LocationResponse, error)
+	GetUserLikes(c context.Context, userID int64) (*UserLikes, error)
+	Like(c context.Context, req *LikeRequest) error
+	Unlike(c context.Context, req *LikeRequest) error
 }

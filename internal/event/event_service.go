@@ -111,3 +111,38 @@ func (s *service) UnmarkAvailable(c context.Context, userID int64, req *MarkAvai
 
 	return s.Repository.UnmarkAvailable(ctx, userID, req.TimeSlotID)
 }
+
+func (s *service) CreateLocation(c context.Context, req *CreateLocationRequest) error {
+	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	defer cancel()
+
+	return s.Repository.CreateLocation(ctx, req)
+}
+
+func (s *service) GetLocations(c context.Context, eventID int64) (*LocationResponse, error) {
+	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	defer cancel()
+
+	return s.Repository.GetLocations(ctx, eventID)
+}
+
+func (s *service) GetUserLikes(c context.Context, userID int64) (*UserLikes, error) {
+	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	defer cancel()
+
+	return s.Repository.GetUserLikes(ctx, userID)
+}
+
+func (s *service) Like(c context.Context, req *LikeRequest) error {
+	ctx, cancel := context.WithTimeout(c, 5*time.Second)
+	defer cancel()
+
+	return s.Repository.Like(ctx, req.UserID, req.LocationID)
+}
+
+func (s *service) Unlike(c context.Context, req *LikeRequest) error {
+	ctx, cancel := context.WithTimeout(c, 5*time.Second)
+	defer cancel()
+
+	return s.Repository.Unlike(ctx, req.UserID, req.LocationID)
+}

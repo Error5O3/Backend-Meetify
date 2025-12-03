@@ -41,6 +41,13 @@ func InitRouter(userHandler *user.Handler, eventHandler *event.Handler) {
 	r.POST("/availability", eventHandler.MarkAvailable)
 	r.DELETE("/availability", eventHandler.UnmarkAvailable)
 
+	r.POST("/location", eventHandler.CreateLocation)
+	r.GET("/locations/:event_id", eventHandler.GetLocations)
+	r.GET("/likes/:user_id", eventHandler.GetUserLikes)
+
+	r.POST("/like", eventHandler.Like)
+	r.DELETE("/like", eventHandler.Unlike)
+
 }
 
 func Start(address string) error {

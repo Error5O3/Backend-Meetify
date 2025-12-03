@@ -182,3 +182,90 @@ func (r *repository) UnmarkAvailable(ctx context.Context, userID, timeSlotID int
 	_, err := r.db.ExecContext(ctx, query, userID, timeSlotID)
 	return err
 }
+
+func (r *repository) CreateLocation(ctx context.Context, location *CreateLocationRequest) error {
+	query := `INSERT INTO locations(event_id, name, link) VALUES ($1, $2, $3)`
+	_, err := r.db.ExecContext(ctx, query, location.EventID, location.Link, location.Name)
+	return err
+}
+
+func (r *repository) GetLocations(ctx context.Context, eventID int64) (*LocationResponse, error) {
+	locationQuery := `SELECT locations.location_id, locations.name, locations.link, 
+						COUNT(user_likes.user_id) AS num_likes
+	          			FROM locations 
+						LEFT JOIN user_likes ON locations.location_id=user_likes.location_id
+						WHERE event_id = $1
+						GROUP BY locations.location_id, locations.name, locations.link`
+
+	rows, err := r.db.QueryContext(ctx, locationQuery, eventID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var locations []Location = []Location{}
+
+	for rows.Next() {
+		var location Location
+
+		err := rows.Scan(&location.LocationID, &location.Name, &location.Link, &location.NumLikes)
+		if err != nil {
+			return nil, err
+		}
+
+		locations = append(locations, location)
+	}
+
+	return &LocationResponse{
+		Locations: locations,
+	}, nil
+}
+
+func (r *repository) GetUserLikes(ctx context.Context, userID int64) (*UserLikes, error) {
+	query := `SELECT location_id 
+				FROM user_likes
+				WHERE user_likes.user_id = $1`
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var likes []int64 = []int64{}
+
+	for rows.Next() {
+		var location_id int64
+
+		err := rows.Scan(&location_id)
+		if err != nil {
+			return nil, err
+		}
+
+		likes = append(likes, location_id)
+	}
+
+	return &UserLikes{
+		Likes: likes,
+	}, nil
+}
+
+func (r *repository) Like(ctx context.Context, userID, locationID int64) error {
+
+	// this will be triggered every time you dealocate the time slot of a userquery := `
+	query := `INSERT INTO user_likes (user_id, location_id)
+			VALUES ($1, $2)
+			ON CONFLICT DO NOTHING
+	`
+	_, err := r.db.ExecContext(ctx, query, userID, locationID)
+	return err
+}
+
+func (r *repository) Unlike(ctx context.Context, userID, locationID int64) error {
+
+	// this will be triggered every time you dealocate the time slot of a userquery := `
+	query := `DELETE FROM user_likes WHERE user_id = $1 AND location_id = $2`
+
+	_, err := r.db.ExecContext(ctx, query, userID, locationID)
+	return err
+}

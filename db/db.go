@@ -67,6 +67,18 @@ func (d *Database) InitializeSchema() error {
     marked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, time_slot_id)
 )`,
+
+		`CREATE TABLE IF NOT EXISTS locations (
+	location_id SERIAL PRIMARY KEY,
+    event_id INT NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+	link VARCHAR(255)
+)`,
+
+		`CREATE TABLE IF NOT EXISTS user_likes (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	location_id INT NOT NULL REFERENCES locations(location_id) ON DELETE CASCADE
+)`,
 	}
 
 	for _, query := range queries {
